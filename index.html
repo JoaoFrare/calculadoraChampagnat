@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Calculadora de notas | Marista Champagnat</title>
+<style>
+  :root {
+    color-scheme: light;
+    --navy:#1d2c46; --navy-deep:#132038; --navy-soft:#30415e;
+    --accent:#bc4654; --accent-deep:#993444; --accent-pale:#fbeff0;
+    --ink:#202c3e; --muted:#647084; --line:#e6e6e7;
+    --back:#f5f3f0; --surface:#ffffff; --good:#185847; --good-bg:#dcf4e9;
+    --warn:#88591a; --warn-bg:#fff1d6;
+  }
+  * { box-sizing:border-box }
+  html { scroll-behavior:smooth }
+  body { margin:0; background:var(--back); color:var(--ink); font:1rem/1.52 system-ui,-apple-system,"Segoe UI",sans-serif }
+  [hidden] { display:none !important }
+  h1,h2,h3,p { margin:0 }
+  button,input { font:inherit }
+  button { cursor:pointer }
+  :focus-visible { outline:3px solid #e78993; outline-offset:3px }
+  .app-shell { min-height:100vh; display:grid; grid-template-columns: 16.6rem minmax(0,1fr) }
+  .sidebar { background:var(--navy); color:#fff; padding:2.1rem 1.3rem 1.55rem; display:flex; flex-direction:column; gap:2.8rem; min-width:0 }
+  .identity { display:flex; align-items:center; gap:.82rem; padding:0 .48rem }
+  .mark { width:2.8rem; height:2.8rem; border-radius:.8rem; display:grid; place-items:center; color:#fff; background:var(--accent); font-size:1.35rem; font-weight:850; letter-spacing:-.08em; flex-shrink:0 }
+  .identity-name { line-height:1.12; color:#e6edf6; font-size:.89rem; letter-spacing:.01em }
+  .identity-name strong { display:block; font-size:1.22rem; letter-spacing:-.035em; color:#fff; margin-top:.16rem }
+  .nav-heading { color:#a9b8cd; font-size:.72rem; font-weight:760; letter-spacing:.16em; text-transform:uppercase; padding:0 .6rem; margin-bottom:.8rem }
+  .tabs { display:flex; flex-direction:column; gap:.44rem }
+  [role=tab] { border:1px solid transparent; border-radius:.7rem; width:100%; padding:.93rem .9rem; display:flex; align-items:center; gap:.78rem; min-height:3.65rem; color:#cad6e4; font-weight:720; line-height:1.18; background:transparent; text-align:left; transition:background .16s ease,color .16s ease }
+  [role=tab] .nav-index { font-size:.78rem; color:#b2c0d1; width:1.52rem; font-weight:800 }
+  [role=tab][aria-selected=true] { background:#fff; color:var(--navy); box-shadow:0 7px 24px #090e1933 }
+  [role=tab][aria-selected=true] .nav-index { color:var(--accent) }
+  [role=tab]:hover:not([aria-selected=true]) { background:#ffffff18; color:#fff }
+  .sidebar-note { margin-top:auto; border-top:1px solid #ffffff26; padding:1.35rem .62rem 0; color:#b7c5d8; line-height:1.55; font-size:.84rem }
+  .sidebar-note strong { display:block; margin-bottom:.28rem; color:#fff; font-weight:700 }
+  .workspace { min-width:0; display:flex; flex-direction:column }
+  .topbar { background:#fff; padding:clamp(1.8rem,4vw,3rem) clamp(1.2rem,4vw,3.65rem) clamp(1.75rem,3vw,2.4rem); border-bottom:1px solid var(--line); display:flex; align-items:flex-start; justify-content:space-between; gap:1.6rem; position:relative; overflow:hidden }
+  .topbar:before { content:""; position:absolute; width:5px; background:var(--accent); top:0; bottom:0; left:0 }
+  .kicker { font-size:.73rem; letter-spacing:.15em; color:var(--accent); font-weight:850; text-transform:uppercase; display:block; margin-bottom:.55rem }
+  h1 { font-size:clamp(2.05rem,4vw,3.35rem); line-height:1.08; letter-spacing:-.052em; color:var(--navy); font-weight:820 }
+  .topbar p { margin-top:.73rem; color:var(--muted); max-width:45ch; font-size:1.015rem }
+  .year-badge { display:flex; flex-direction:column; align-items:center; justify-content:center; border:1px solid #e8d9dc; border-radius:.9rem; background:#fdf6f7; color:var(--accent-deep); min-width:7rem; padding:.65rem .95rem; margin-top:.12rem; flex-shrink:0 }
+  .year-badge span { font-size:.66rem; font-weight:750; letter-spacing:.09em; white-space:nowrap }
+  .year-badge strong { font-size:1.72rem; font-weight:850; line-height:1.1; letter-spacing:-.045em }
+  .content { width:100%; max-width:89rem; padding:clamp(1rem,3vw,2.4rem) clamp(1.1rem,4vw,3.65rem) 2rem; margin:0 auto }
+  .layout { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(19rem,.95fr); gap:1.2rem; align-items:start }
+  .card { min-width:0; border-radius:1.1rem; background:#fff; border:1px solid var(--line); padding:clamp(1.18rem,2.6vw,2rem); box-shadow:0 4px 25px #19233b08 }
+  form.card { border-top:4px solid var(--accent) }
+  h2 { color:var(--navy); font-size:1.45rem; letter-spacing:-.027em; line-height:1.22 }
+  h3 { font-size:1.17rem; line-height:1.26; letter-spacing:-.02em; color:inherit }
+  .intro,.hint,.muted { color:var(--muted) }
+  .intro { margin:.55rem 0 1.45rem; font-size:.93rem }
+  .fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1.04rem 1.06rem }
+  .field { min-width:0 }
+  label { display:block; font-weight:740; line-height:1.3; font-size:.92rem }
+  .hint { display:block; font-size:.78rem; margin-top:.28rem; line-height:1.4 }
+  input { width:100%; background:#fbfbfc; border:1px solid #d0d4dc; color:var(--ink); border-radius:.65rem; padding:.69rem .85rem; min-height:3rem; margin-top:.4rem; transition:border-color .15s,box-shadow .15s }
+  input:focus { border-color:var(--accent); outline:none; box-shadow:0 0 0 3px #bc465426; background:#fff }
+  input::placeholder { color:#929cad }
+  input[aria-invalid=true] { border-color:#c33140; background:#fff6f7 }
+  .error { display:block; font-size:.79rem; color:#a8283c; margin-top:.23rem }
+  .optional { margin-top:1.8rem; padding:1.3rem 1.15rem; border-radius:.8rem; background:#f8f6f4; border:1px dashed #d8d2ce }
+  .optional .field { display:flex; flex-direction:column }
+  .optional .hint { flex:1 }
+  .optional .muted { font-weight:500; font-size:.79rem }
+  .actions { display:flex; flex-wrap:wrap; gap:.65rem; margin-top:1.55rem }
+  .primary,.secondary { font-size:.96rem; padding:.76rem 1.35rem; border-radius:.7rem; border:1px solid transparent; font-weight:750; min-height:3.05rem }
+  .primary { background:var(--accent); border-color:var(--accent); color:#fff; flex:1 }
+  .primary:hover { background:var(--accent-deep); border-color:var(--accent-deep) }
+  .secondary { color:var(--navy); background:#fff; border-color:#d5d8df }
+  .secondary:hover { background:#f4f5f8 }
+  .result { color:#fff; background:var(--navy); border-color:var(--navy); padding:clamp(1.25rem,2.6vw,2.15rem); position:sticky; top:1.15rem; overflow:hidden; box-shadow:0 14px 32px #17274417 }
+  .result:before { content:""; display:block; width:2.6rem; height:.28rem; border-radius:4rem; background:#f2898c; margin-bottom:1.35rem }
+  .result h3 { font-size:1.26rem; letter-spacing:-.025em }
+  .result .muted,.result .hint { color:#c9d4e2 }
+  .result p { margin-top:.55rem }
+  .result .answer { border:1px solid #ffffff26; margin-top:1.2rem; padding:1.3rem 1.05rem; border-radius:.85rem; background:#ffffff13; color:#fff; overflow-wrap:anywhere }
+  .result .answer strong { display:block; font-size:clamp(1.14rem,2.9vw,1.57rem); line-height:1.2; letter-spacing:-.022em }
+  .result .answer strong.grade { color:#fff; font-size:clamp(2.55rem,5vw,4.1rem); letter-spacing:-.065em; font-variant-numeric:tabular-nums }
+  .result .answer p { font-size:.88rem; color:#eff3f7; line-height:1.5 }
+  .result .answer[data-state=good] { background:#1a5d4a; border-color:#4ca588 }
+  .result .answer[data-state=limit] { background:#654219; border-color:#b38b47 }
+  dl { margin:1.3rem 0 0 }
+  .metric { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:baseline; gap:.65rem; border-top:1px solid #ffffff26; padding:.76rem 0 }
+  dt { font-size:.85rem; color:#cbd7e4; overflow-wrap:anywhere }
+  dd { margin:0; font-size:.98rem; font-variant-numeric:tabular-nums; font-weight:800; color:#fff }
+  .result dl + .hint { font-size:.78rem; line-height:1.5; margin-top:1.1rem }
+  .result #pr-elegibilidade { margin-top:.8rem }
+  .site-footer { margin-top:auto; padding:.4rem clamp(1.1rem,4vw,3.65rem) 1.8rem; font-size:.83rem; color:var(--muted) }
+  .no-script { padding:1.1rem; background:#ffe7e9; border-radius:.5rem; margin-bottom:1rem; color:#8e2030 }
+  @media (max-width: 70rem) { .app-shell { grid-template-columns:13.3rem minmax(0,1fr) } .sidebar { padding-inline:1rem } .layout { grid-template-columns:1fr } .result { position:static } }
+  @media (max-width: 48rem) {
+    .app-shell { display:block }
+    .sidebar { padding:1rem 1.1rem .85rem; gap:1.1rem }
+    .identity { padding:0 }
+    .mark { height:2.35rem; width:2.35rem; border-radius:.6rem }
+    .identity-name strong { display:inline; margin-left:.2rem; font-size:1.07rem }
+    .nav-heading,.sidebar-note { display:none }
+    .tabs { flex-direction:row; gap:.6rem }
+    [role=tab] { flex:1; width:auto; justify-content:center; min-height:2.7rem; padding:.7rem .4rem; background:#ffffff12; font-size:.88rem }
+    [role=tab][aria-selected=true] { box-shadow:none }
+    [role=tab] .nav-index { display:none }
+    .topbar { padding:1.5rem 1.2rem }
+    .content { padding:1.2rem 1rem 1.6rem }
+  }
+  @media (max-width: 30rem) {
+    h1 { font-size:2.08rem }
+    .year-badge { min-width:4.5rem; padding:.5rem }
+    .year-badge span { font-size:.54rem }
+    .year-badge strong { font-size:1.22rem }
+    .topbar { gap:.5rem }
+    .card { padding:1rem }
+    .fields { gap:.87rem .68rem }
+    .optional { padding:1rem .74rem }
+    label { font-size:.86rem }
+    input { padding:.63rem .57rem }
+  }
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" aria-label="Identificação e opções da calculadora">
+    <div class="identity"><div class="mark" aria-hidden="true">C</div><div class="identity-name">Marista <strong>Champagnat</strong></div></div>
+    <div>
+      <p class="nav-heading">Escolha o cálculo</p>
+      <div class="tabs" role="tablist" aria-label="Tipo de cálculo">
+        <button type="button" role="tab" id="tab-pr" aria-selected="true" aria-controls="painel-pr"><span class="nav-index" aria-hidden="true">01</span> Recuperação (PR)</button>
+        <button type="button" role="tab" id="tab-exame" aria-selected="false" aria-controls="painel-exame" tabindex="-1"><span class="nav-index" aria-hidden="true">02</span> Exame final</button>
+      </div>
+    </div>
+
+  </aside>
+  <div class="workspace">
+    <header class="topbar">
+      <div><h1>Calculadora de notas</h1><p>Calcule a nota necessária na recuperação ou no exame final.</p></div>
+      <div class="year-badge"><span>ANO LETIVO</span><strong>2026</strong></div>
+    </header>
+    <main class="content">
+      <noscript><p class="no-script">Ative o JavaScript do navegador para usar a calculadora.</p></noscript>
+      <section id="painel-pr" role="tabpanel" aria-labelledby="tab-pr">
+    <div class="layout">
+      <form class="card" id="form-pr" novalidate autocomplete="off">
+        <h2>Notas do semestre</h2>
+        <p class="intro">Use as notas de um mesmo componente curricular, com os valores do boletim. Pode digitar com vírgula.</p>
+        <div class="fields">
+          <div class="field"><label for="p1">P1 (Área)</label><span class="hint" id="p1-ajuda">De 0 a 3</span><input id="p1" type="text" inputmode="decimal" placeholder="Ex. 2,1" aria-describedby="p1-ajuda p1-erro" required><span class="error" id="p1-erro" hidden></span></div>
+          <div class="field"><label for="p2">P2 (Componente)</label><span class="hint" id="p2-ajuda">De 0 a 3</span><input id="p2" type="text" inputmode="decimal" placeholder="Ex. 2,4" aria-describedby="p2-ajuda p2-erro" required><span class="error" id="p2-erro" hidden></span></div>
+          <div class="field"><label for="evo">Simulado</label><span class="hint" id="evo-ajuda">De 0 a 1</span><input id="evo" type="text" inputmode="decimal" placeholder="Ex. 0,7" aria-describedby="evo-ajuda evo-erro" required><span class="error" id="evo-erro" hidden></span></div>
+          <div class="field"><label for="t1">T1</label><span class="hint" id="t1-ajuda">De 0 a 1</span><input id="t1" type="text" inputmode="decimal" placeholder="Ex. 0,8" aria-describedby="t1-ajuda t1-erro" required><span class="error" id="t1-erro" hidden></span></div>
+          <div class="field"><label for="t2">T2</label><span class="hint" id="t2-ajuda">De 0 a 1</span><input id="t2" type="text" inputmode="decimal" placeholder="Ex. 0,9" aria-describedby="t2-ajuda t2-erro" required><span class="error" id="t2-erro" hidden></span></div>
+          <div class="field"><label for="ic">IC/SD</label><span class="hint" id="ic-ajuda">De 0 a 1</span><input id="ic" type="text" inputmode="decimal" placeholder="Ex. 0,8" aria-describedby="ic-ajuda ic-erro" required><span class="error" id="ic-erro" hidden></span></div>
+        </div>
+        <div class="optional">
+          <div class="fields">
+            <div class="field">
+              <label for="pr-sem1">Média do 1º semestre <span class="muted">(opcional)</span></label>
+              <span class="hint" id="pr-sem1-ajuda">De 0 a 10. Informe a média para calcular a meta do 2º semestre. Em branco, a meta é 7,0 no semestre.</span>
+              <input id="pr-sem1" type="text" inputmode="decimal" placeholder="Ex. 6,7" aria-describedby="pr-sem1-ajuda pr-sem1-erro"><span class="error" id="pr-sem1-erro" hidden></span>
+            </div>
+            <div class="field">
+              <label for="pr">Nota obtida na PR <span class="muted">(opcional)</span></label>
+              <span class="hint" id="pr-ajuda">De 0 a 7. Preencha apenas para simular a média com a PR.</span>
+              <input id="pr" type="text" inputmode="decimal" placeholder="Ex. 5,6" aria-describedby="pr-ajuda pr-erro"><span class="error" id="pr-erro" hidden></span>
+            </div>
+          </div>
+        </div>
+        <div class="actions"><button class="primary" type="submit">Calcular</button><button class="secondary" type="reset">Limpar</button></div>
+      </form>
+      <aside class="card result" aria-labelledby="pr-res-titulo">
+        <h3 id="pr-res-titulo">Resultado da recuperação</h3>
+        <div role="status" aria-atomic="true">
+          <p class="muted" id="pr-vazio">Preencha as notas do semestre e toque em Calcular.</p>
+          <div id="pr-resultado" hidden>
+            <div class="answer" id="pr-destaque"><strong id="pr-nota"></strong><p id="pr-msg"></p></div>
+            <p class="hint" id="pr-elegibilidade" hidden>Como a média do 2º semestre já é de pelo menos 7,0, confirme com a escola se é possível fazer a PR neste caso.</p>
+            <dl>
+              <div class="metric" id="pr-meta-linha" hidden><dt>Meta no 2º semestre para fechar o ano com 7,0</dt><dd id="pr-meta"></dd></div>
+              <div class="metric"><dt>Média semestral sem PR</dt><dd id="pr-media"></dd></div>
+              <div class="metric"><dt>SOMA (P1 + P2 + SIMULADO)</dt><dd id="pr-soma"></dd></div>
+              <div class="metric" id="pr-com-linha" hidden><dt>Média semestral com PR</dt><dd id="pr-com"></dd></div>
+              <div class="metric" id="pr-anual-sem-linha" hidden><dt>Média anual sem PR</dt><dd id="pr-anual-sem"></dd></div>
+              <div class="metric" id="pr-anual-com-linha" hidden><dt>Média anual com PR</dt><dd id="pr-anual-com"></dd></div>
+            </dl>
+            <p class="hint">A PR recupera apenas P1, P2 e Simulado. As notas de T1, T2 e IC/SD permanecem na média semestral.</p>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+  <section id="painel-exame" role="tabpanel" aria-labelledby="tab-exame" hidden>
+    <div class="layout">
+      <form class="card" id="form-exame" novalidate autocomplete="off">
+        <h2>Médias dos semestres</h2>
+        <p class="intro">Use as médias finais do mesmo componente curricular, como aparecem no boletim.</p>
+        <div class="fields">
+          <div class="field"><label for="sem1">1º semestre</label><span class="hint" id="sem1-ajuda">De 0 a 10</span><input id="sem1" type="text" inputmode="decimal" placeholder="Ex. 5,0" aria-describedby="sem1-ajuda sem1-erro" required><span class="error" id="sem1-erro" hidden></span></div>
+          <div class="field"><label for="sem2">2º semestre</label><span class="hint" id="sem2-ajuda">De 0 a 10</span><input id="sem2" type="text" inputmode="decimal" placeholder="Ex. 5,5" aria-describedby="sem2-ajuda sem2-erro" required><span class="error" id="sem2-erro" hidden></span></div>
+        </div>
+        <div class="actions"><button class="primary" type="submit">Calcular</button><button class="secondary" type="reset">Limpar</button></div>
+      </form>
+      <aside class="card result" aria-labelledby="exame-res-titulo">
+        <h3 id="exame-res-titulo">Resultado do exame</h3>
+        <div role="status" aria-atomic="true">
+          <p class="muted" id="exame-vazio">Preencha as médias e toque em Calcular.</p>
+          <div id="exame-resultado" hidden>
+            <div class="answer" id="exame-destaque"><strong id="exame-nota"></strong><p id="exame-msg"></p></div>
+            <dl><div class="metric"><dt>Média anual</dt><dd id="exame-media"></dd></div></dl>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+</main>
+    <footer class="site-footer">Marista Champagnat · Simulação de notas.</footer>
+  </div>
+</div>
+<script>
+'use strict';
+
+// Notas são representadas em milionésimos para comparar os limites sem
+// imprecisão de ponto flutuante. As médias podem ter meio milionésimo.
+const UNIDADE = 1000000;
+const LIMITE = 7 * UNIDADE;
+const MAX_EXAME = 10 * UNIDADE;
+const formato = new Intl.NumberFormat('pt-BR', {minimumFractionDigits: 1, maximumFractionDigits: 7});
+const exibirNota = (n) => formato.format(n / UNIDADE);
+const $ = (id) => document.getElementById(id);
+
+function lerNota(texto, maximo, opcional = false) {
+  const limpo = texto.trim();
+  if (!limpo) return opcional ? {valor: null} : {erro: 'Informe a nota.'};
+  const normalizado = limpo.replace(',', '.');
+  if (!/^(?:\d+(?:\.\d{0,6})?|\.\d{1,6})$/.test(normalizado)) {
+    if (/^-\d/.test(normalizado)) return {erro: 'Informe uma nota de 0 a ' + maximo + '.'};
+    return {erro: 'Informe uma nota com até 6 casas decimais.'};
+  }
+  const [inteira, decimal = ''] = normalizado.split('.');
+  const valor = Number(inteira) * UNIDADE + Number(decimal.padEnd(6, '0'));
+  return valor > maximo * UNIDADE ? {erro: 'Informe uma nota de 0 a ' + maximo + '.'} : {valor};
+}
+
+function calcularPR({p1, p2, evo, t1, t2, ic, pr, 'pr-sem1': sem1 = null}) {
+  const soma = p1 + p2 + evo;
+  const outros = t1 + t2 + ic;
+  const media = soma + outros;
+  // Para fechar o ano com 7,0, os dois semestres precisam somar 14,0.
+  const meta = sem1 === null ? LIMITE : 2 * LIMITE - sem1;
+  const precisa = media < meta ? 2 * (meta - outros) - soma : null;
+  const comPR = pr === null ? null : outros + (pr > soma ? (pr + soma) / 2 : soma);
+  const anualSem = sem1 === null ? null : (sem1 + media) / 2;
+  const anualCom = sem1 === null || comPR === null ? null : (sem1 + comPR) / 2;
+  return {soma, media, meta, precisa, comPR, anualSem, anualCom};
+}
+
+function calcularExame({sem1, sem2}) {
+  const media = (sem1 + sem2) / 2;
+  return {media, precisa: media < LIMITE ? MAX_EXAME - media : null};
+}
+
+function limparErro(id) {
+  $(id).removeAttribute('aria-invalid');
+  $(id + '-erro').hidden = true;
+}
+
+function configurarFormulario(modo, campos, mostrar) {
+  const form = $('form-' + modo);
+  const resultado = $(modo + '-resultado');
+  const vazio = $(modo + '-vazio');
+  const inicial = vazio.textContent;
+
+  function ocultar(mensagem = inicial) {
+    resultado.hidden = true;
+    vazio.textContent = mensagem;
+    vazio.hidden = false;
+  }
+
+  form.addEventListener('input', (ev) => {
+    if (ev.target instanceof HTMLInputElement) limparErro(ev.target.id);
+    if (!resultado.hidden) ocultar('Notas alteradas. Toque em Calcular para atualizar.');
+  });
+
+  form.addEventListener('reset', () => {
+    campos.forEach(([id]) => limparErro(id));
+    ocultar();
+  });
+
+  form.addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    const valores = {};
+    let primeiroErro = null;
+    for (const [id, maximo, opcional] of campos) {
+      const entrada = $(id);
+      const nota = lerNota(entrada.value, maximo, opcional);
+      if (nota.erro) {
+        primeiroErro ??= entrada;
+        entrada.setAttribute('aria-invalid', 'true');
+        $(id + '-erro').textContent = nota.erro;
+        $(id + '-erro').hidden = false;
+      } else {
+        limparErro(id);
+        valores[id] = nota.valor;
+      }
+    }
+    if (primeiroErro) {
+      ocultar('Revise os campos indicados e calcule novamente.');
+      primeiroErro.focus();
+      return;
+    }
+    mostrar(valores);
+    vazio.hidden = true;
+    resultado.hidden = false;
+    if (window.matchMedia('(max-width: 45rem)').matches) {
+      const cartao = resultado.closest('.result');
+      if (cartao.getBoundingClientRect().top > window.innerHeight * 0.8) cartao.scrollIntoView({block: 'nearest'});
+    }
+  });
+}
+
+function destaque(modo, estado, titulo, explicacao) {
+  $(modo + '-destaque').dataset.state = estado;
+  $(modo + '-nota').textContent = titulo;
+  $(modo + '-nota').classList.toggle('grade', estado === 'nota');
+  $(modo + '-msg').textContent = explicacao;
+}
+
+function mostrarMetricaOpcional(id, valor) {
+  $(id + '-linha').hidden = valor === null;
+  $(id).textContent = valor === null ? '' : exibirNota(valor);
+}
+
+configurarFormulario('pr', [
+  ['p1', 3], ['p2', 3], ['evo', 1], ['t1', 1], ['t2', 1], ['ic', 1], ['pr-sem1', 10, true], ['pr', 7, true],
+], (valores) => {
+  const {soma, media, meta, precisa, comPR, anualSem, anualCom} = calcularPR(valores);
+  const consideraAno = anualSem !== null;
+  if (precisa === null) {
+    if (consideraAno) {
+      destaque('pr', 'good', 'A meta anual já foi atingida', 'Com as notas informadas, a média anual chega a 7,0 ou mais sem precisar da PR para atingir essa meta.');
+    } else {
+      destaque('pr', 'good', 'Não precisa fazer PR', 'A média semestral já atingiu 7,0.');
+    }
+  } else if (precisa > LIMITE) {
+    const objetivo = consideraAno ? 'atingir a meta anual' : 'chegar a 7,0 no semestre';
+    destaque('pr', 'limit', 'A PR não é suficiente para ' + objetivo, 'A nota necessária seria ' + exibirNota(precisa) + ', acima do máximo de 7,0 na PR.');
+  } else {
+    const objetivo = consideraAno
+      ? 'atingir ' + exibirNota(meta) + ' no 2º semestre e fechar o ano com média 7,0'
+      : 'atingir média semestral 7,0';
+    destaque('pr', 'nota', exibirNota(precisa), 'Nota necessária na PR para ' + objetivo + '.');
+  }
+  $('pr-elegibilidade').hidden = !(consideraAno && precisa !== null && precisa <= LIMITE && media >= LIMITE);
+  $('pr-soma').textContent = exibirNota(soma);
+  $('pr-media').textContent = exibirNota(media);
+  mostrarMetricaOpcional('pr-meta', consideraAno ? meta : null);
+  mostrarMetricaOpcional('pr-com', comPR);
+  mostrarMetricaOpcional('pr-anual-sem', anualSem);
+  mostrarMetricaOpcional('pr-anual-com', anualCom);
+});
+
+configurarFormulario('exame', [['sem1', 10], ['sem2', 10]], (valores) => {
+  const {media, precisa} = calcularExame(valores);
+  if (precisa === null) {
+    destaque('exame', 'good', 'Não precisa fazer exame', 'A média anual já atingiu 7,0.');
+  } else {
+    destaque('exame', 'nota', exibirNota(precisa), 'Nota necessária no exame final.');
+  }
+  $('exame-media').textContent = exibirNota(media);
+});
+
+const abas = Array.from(document.querySelectorAll('[role=tab]'));
+function abrirAba(ativa) {
+  for (const aba of abas) {
+    const selecionada = aba === ativa;
+    aba.setAttribute('aria-selected', String(selecionada));
+    aba.tabIndex = selecionada ? 0 : -1;
+    $(aba.getAttribute('aria-controls')).hidden = !selecionada;
+  }
+}
+abas.forEach((aba, i) => {
+  aba.addEventListener('click', () => abrirAba(aba));
+  aba.addEventListener('keydown', (ev) => {
+    const alvos = {ArrowLeft: (i + abas.length - 1) % abas.length, ArrowRight: (i + 1) % abas.length, Home: 0, End: abas.length - 1};
+    if (!Object.hasOwn(alvos, ev.key)) return;
+    ev.preventDefault();
+    const alvo = abas[alvos[ev.key]];
+    abrirAba(alvo);
+    alvo.focus();
+  });
+});
+</script>
+</body>
+</html>
