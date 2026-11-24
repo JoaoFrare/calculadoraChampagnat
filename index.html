@@ -149,10 +149,9 @@
         <div class="fields">
           <div class="field"><label for="p1">P1 (Área)</label><span class="hint" id="p1-ajuda">De 0 a 3</span><input id="p1" type="text" inputmode="decimal" placeholder="Ex. 2,1" aria-describedby="p1-ajuda p1-erro" required><span class="error" id="p1-erro" hidden></span></div>
           <div class="field"><label for="p2">P2 (Componente)</label><span class="hint" id="p2-ajuda">De 0 a 3</span><input id="p2" type="text" inputmode="decimal" placeholder="Ex. 2,4" aria-describedby="p2-ajuda p2-erro" required><span class="error" id="p2-erro" hidden></span></div>
-          <div class="field"><label for="evo">Simulado</label><span class="hint" id="evo-ajuda">De 0 a 1</span><input id="evo" type="text" inputmode="decimal" placeholder="Ex. 0,7" aria-describedby="evo-ajuda evo-erro" required><span class="error" id="evo-erro" hidden></span></div>
-          <div class="field"><label for="t1">T1</label><span class="hint" id="t1-ajuda">De 0 a 1</span><input id="t1" type="text" inputmode="decimal" placeholder="Ex. 0,8" aria-describedby="t1-ajuda t1-erro" required><span class="error" id="t1-erro" hidden></span></div>
-          <div class="field"><label for="t2">T2</label><span class="hint" id="t2-ajuda">De 0 a 1</span><input id="t2" type="text" inputmode="decimal" placeholder="Ex. 0,9" aria-describedby="t2-ajuda t2-erro" required><span class="error" id="t2-erro" hidden></span></div>
-          <div class="field"><label for="ic">IC/SD</label><span class="hint" id="ic-ajuda">De 0 a 1</span><input id="ic" type="text" inputmode="decimal" placeholder="Ex. 0,8" aria-describedby="ic-ajuda ic-erro" required><span class="error" id="ic-erro" hidden></span></div>
+          <div class="field"><label for="ti">TI</label><span class="hint" id="ti-ajuda">De 0 a 1</span><input id="ti" type="text" inputmode="decimal" placeholder="Ex. 0,7" aria-describedby="ti-ajuda ti-erro" required><span class="error" id="ti-erro" hidden></span></div>
+          <div class="field"><label for="tg">TG</label><span class="hint" id="tg-ajuda">De 0 a 1,5</span><input id="tg" type="text" inputmode="decimal" placeholder="Ex. 1,2" aria-describedby="tg-ajuda tg-erro" required><span class="error" id="tg-erro" hidden></span></div>
+          <div class="field"><label for="pic">PIC</label><span class="hint" id="pic-ajuda">De 0 a 1,5</span><input id="pic" type="text" inputmode="decimal" placeholder="Ex. 1,3" aria-describedby="pic-ajuda pic-erro" required><span class="error" id="pic-erro" hidden></span></div>
         </div>
         <div class="optional">
           <div class="fields">
@@ -180,12 +179,12 @@
             <dl>
               <div class="metric" id="pr-meta-linha" hidden><dt>Meta no 2º semestre para fechar o ano com 7,0</dt><dd id="pr-meta"></dd></div>
               <div class="metric"><dt>Média semestral sem PR</dt><dd id="pr-media"></dd></div>
-              <div class="metric"><dt>SOMA (P1 + P2 + SIMULADO)</dt><dd id="pr-soma"></dd></div>
+              <div class="metric"><dt>SOMA (P1 + P2 + TI)</dt><dd id="pr-soma"></dd></div>
               <div class="metric" id="pr-com-linha" hidden><dt>Média semestral com PR</dt><dd id="pr-com"></dd></div>
               <div class="metric" id="pr-anual-sem-linha" hidden><dt>Média anual sem PR</dt><dd id="pr-anual-sem"></dd></div>
               <div class="metric" id="pr-anual-com-linha" hidden><dt>Média anual com PR</dt><dd id="pr-anual-com"></dd></div>
             </dl>
-            <p class="hint">A PR recupera apenas P1, P2 e Simulado. As notas de T1, T2 e IC/SD permanecem na média semestral.</p>
+            <p class="hint">A PR recupera apenas P1, P2 e TI. As notas de TG e PIC permanecem na média semestral.</p>
           </div>
         </div>
       </aside>
@@ -235,17 +234,17 @@ function lerNota(texto, maximo, opcional = false) {
   if (!limpo) return opcional ? {valor: null} : {erro: 'Informe a nota.'};
   const normalizado = limpo.replace(',', '.');
   if (!/^(?:\d+(?:\.\d{0,6})?|\.\d{1,6})$/.test(normalizado)) {
-    if (/^-\d/.test(normalizado)) return {erro: 'Informe uma nota de 0 a ' + maximo + '.'};
+    if (/^-\d/.test(normalizado)) return {erro: 'Informe uma nota de 0 a ' + String(maximo).replace('.', ',') + '.'};
     return {erro: 'Informe uma nota com até 6 casas decimais.'};
   }
   const [inteira, decimal = ''] = normalizado.split('.');
   const valor = Number(inteira) * UNIDADE + Number(decimal.padEnd(6, '0'));
-  return valor > maximo * UNIDADE ? {erro: 'Informe uma nota de 0 a ' + maximo + '.'} : {valor};
+  return valor > maximo * UNIDADE ? {erro: 'Informe uma nota de 0 a ' + String(maximo).replace('.', ',') + '.'} : {valor};
 }
 
-function calcularPR({p1, p2, evo, t1, t2, ic, pr, 'pr-sem1': sem1 = null}) {
-  const soma = p1 + p2 + evo;
-  const outros = t1 + t2 + ic;
+function calcularPR({p1, p2, ti, tg, pic, pr, 'pr-sem1': sem1 = null}) {
+  const soma = p1 + p2 + ti;
+  const outros = tg + pic;
   const media = soma + outros;
   // Para fechar o ano com 7,0, os dois semestres precisam somar 14,0.
   const meta = sem1 === null ? LIMITE : 2 * LIMITE - sem1;
@@ -333,7 +332,7 @@ function mostrarMetricaOpcional(id, valor) {
 }
 
 configurarFormulario('pr', [
-  ['p1', 3], ['p2', 3], ['evo', 1], ['t1', 1], ['t2', 1], ['ic', 1], ['pr-sem1', 10, true], ['pr', 7, true],
+  ['p1', 3], ['p2', 3], ['ti', 1], ['tg', 1.5], ['pic', 1.5], ['pr-sem1', 10, true], ['pr', 7, true],
 ], (valores) => {
   const {soma, media, meta, precisa, comPR, anualSem, anualCom} = calcularPR(valores);
   const consideraAno = anualSem !== null;
